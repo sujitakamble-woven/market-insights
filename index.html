@@ -1,0 +1,1189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Market Insights Builder v4</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600&family=DM+Sans:wght@300;400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{--bg:#0c0e18;--sb:#111422;--panel:#161c2e;--card:#1a2138;--border:#242d47;--input:#111828;--text:#e2e8f8;--muted:#4a5a80;--dim:#2d3a58;--green:#34d399;--red:#f87171;--blue:#60a5fa;--yellow:#fbbf24;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:13px;}
+.app{display:flex;height:100vh;overflow:hidden;}
+.sidebar{width:268px;background:var(--sb);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+.sb-head{padding:18px 18px 12px;border-bottom:1px solid var(--border);}
+.sb-logo{font-family:'Syne',sans-serif;font-size:13px;font-weight:800;color:var(--green);letter-spacing:2px;text-transform:uppercase;}
+.sb-sub{font-size:9.5px;color:var(--muted);margin-top:2px;}
+.sb-nav{flex:1;overflow-y:auto;padding:8px 0;}
+.sn-section{padding:8px 14px 4px;font-size:8.5px;text-transform:uppercase;letter-spacing:2px;color:var(--muted);font-weight:700;}
+.sn-item{display:flex;align-items:center;gap:10px;padding:7px 16px;cursor:pointer;transition:all 0.15s;border-left:2.5px solid transparent;}
+.sn-item:hover{background:rgba(52,211,153,0.05);}
+.sn-item.active{background:rgba(52,211,153,0.08);border-left-color:var(--green);}
+.sn-item.active .sn-label{color:var(--green);}
+.sn-dot{width:6px;height:6px;border-radius:50%;background:var(--dim);flex-shrink:0;transition:all 0.2s;}
+.sn-item.active .sn-dot{background:var(--green);box-shadow:0 0 6px var(--green);}
+.sn-label{font-size:11px;color:var(--muted);}
+.sn-num{margin-left:auto;font-size:8.5px;font-family:'JetBrains Mono',monospace;color:var(--muted);}
+.prog-bar{height:2px;background:var(--border);}
+.prog-fill{height:100%;background:var(--green);transition:width 0.4s;}
+.sb-foot{padding:12px 14px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:10px;}
+
+/* TEMPLATE PICKER */
+.tpl-label{font-size:9px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);font-weight:700;margin-bottom:6px;}
+.tpl-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.tpl-btn{border:2px solid var(--border);border-radius:6px;padding:7px 6px;cursor:pointer;transition:all 0.2s;display:flex;flex-direction:column;align-items:center;gap:4px;background:transparent;}
+.tpl-btn:hover{border-color:var(--dim);}
+.tpl-btn.on{border-color:var(--green);background:rgba(52,211,153,0.08);}
+.tpl-swatch{width:32px;height:18px;border-radius:3px;}
+.tpl-name{font-size:8.5px;color:var(--muted);font-weight:600;}
+.tpl-btn.on .tpl-name{color:var(--green);}
+
+/* AI + GENERATE BUTTONS */
+.btn-ai{width:100%;padding:9px;background:rgba(96,165,250,0.1);color:var(--blue);font-family:'Syne',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;border:1.5px solid rgba(96,165,250,0.3);border-radius:6px;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:6px;}
+.btn-ai:hover{background:rgba(96,165,250,0.18);border-color:var(--blue);}
+.btn-ai.loading{opacity:0.6;cursor:not-allowed;}
+.btn-gen{width:100%;padding:10px;background:var(--green);color:#05130a;font-family:'Syne',sans-serif;font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;border:none;border-radius:6px;cursor:pointer;transition:all 0.2s;}
+.btn-gen:hover{background:#6ee7b7;transform:translateY(-1px);box-shadow:0 4px 16px rgba(52,211,153,0.3);}
+
+
+
+/* TOPBAR */
+.topbar{padding:12px 26px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--panel);}
+.section-title{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:var(--text);}
+.section-hint{font-size:10px;color:var(--muted);margin-top:2px;}
+.nav-arrows{display:flex;gap:8px;}
+.nav-btn{padding:5px 13px;border:1px solid var(--border);background:transparent;color:var(--muted);border-radius:5px;cursor:pointer;font-size:11px;transition:all 0.15s;}
+.nav-btn:hover{border-color:var(--green);color:var(--green);}
+
+/* FORM */
+.form-area{flex:1;overflow-y:auto;padding:22px 26px;}
+.frow{display:grid;gap:12px;margin-bottom:14px;}
+.frow.c2{grid-template-columns:1fr 1fr;}
+.frow.c3{grid-template-columns:1fr 1fr 1fr;}
+.frow.c4{grid-template-columns:1fr 1fr 1fr 1fr;}
+.fg{display:flex;flex-direction:column;gap:4px;}
+.fg label{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);}
+.fg input,.fg select,.fg textarea{background:var(--input);border:1px solid var(--border);color:var(--text);border-radius:5px;padding:8px 10px;font-size:12px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color 0.15s;}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--green);}
+.fg textarea{resize:vertical;min-height:55px;line-height:1.6;}
+.fg select option{background:#1a2138;}
+.fg .hint{font-size:9px;color:var(--muted);margin-top:2px;}
+.sc{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:16px 18px;margin-bottom:14px;}
+.sc-title{font-family:'Syne',sans-serif;font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--green);margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+.sc-title::before{content:'';width:3px;height:13px;background:var(--green);border-radius:2px;}
+.disc-hint{font-size:10px;color:var(--muted);background:rgba(52,211,153,0.05);border:1px solid rgba(52,211,153,0.15);border-radius:5px;padding:8px 11px;margin-bottom:12px;line-height:1.5;}
+.dtable{width:100%;border-collapse:collapse;margin-bottom:8px;}
+.dtable th{text-align:left;padding:4px 7px;font-size:9px;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted);font-weight:700;border-bottom:1px solid var(--border);}
+.dtable td{padding:3px 3px;}
+.dtable td input{background:var(--input);border:1px solid var(--border);color:var(--text);border-radius:4px;padding:6px 8px;font-size:12px;width:100%;outline:none;font-family:'DM Sans',sans-serif;}
+.dtable td input:focus{border-color:var(--green);}
+.dtable .del-btn{background:rgba(248,113,113,0.08);border:1px solid rgba(248,113,113,0.2);color:var(--red);width:26px;height:26px;border-radius:4px;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;transition:all 0.15s;}
+.dtable .del-btn:hover{background:rgba(248,113,113,0.2);}
+.add-row-btn{background:rgba(52,211,153,0.06);border:1px dashed rgba(52,211,153,0.3);color:var(--green);padding:6px 14px;border-radius:5px;cursor:pointer;font-size:11px;font-weight:600;width:100%;transition:all 0.15s;}
+.add-row-btn:hover{background:rgba(52,211,153,0.12);}
+.city-tabs{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:12px;}
+.ctab{padding:4px 12px;border-radius:4px;background:var(--input);border:1px solid var(--border);color:var(--muted);font-size:10.5px;cursor:pointer;transition:all 0.15s;}
+.ctab.on{background:rgba(52,211,153,0.12);border-color:var(--green);color:var(--green);font-weight:600;}
+.city-panel{display:none;}
+.city-panel.on{display:block;}
+.no-cities-msg{font-size:11px;color:var(--muted);padding:14px;background:var(--input);border-radius:6px;text-align:center;border:1px dashed var(--border);}
+.no-cities-msg a{color:var(--green);cursor:pointer;text-decoration:underline;}
+.pane{display:none;} .pane.on{display:block;}
+
+/* AI INSIGHTS PANEL */
+.ai-panel{background:rgba(96,165,250,0.05);border:1px solid rgba(96,165,250,0.2);border-radius:8px;padding:16px 18px;margin-bottom:14px;}
+.ai-panel-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--blue);margin-bottom:12px;display:flex;align-items:center;gap:7px;}
+.ai-loading{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:12px;padding:10px 0;}
+.ai-dot{width:6px;height:6px;border-radius:50%;background:var(--blue);animation:pulse 1.2s ease-in-out infinite;}
+.ai-dot:nth-child(2){animation-delay:0.2s;}
+.ai-dot:nth-child(3){animation-delay:0.4s;}
+@keyframes pulse{0%,80%,100%{transform:scale(0.6);opacity:0.4}40%{transform:scale(1);opacity:1}}
+.insight-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.insight-card{background:var(--card);border:1px solid var(--border);border-radius:6px;padding:11px 12px;}
+.ins-tag{font-size:8px;text-transform:uppercase;letter-spacing:1.2px;font-weight:700;margin-bottom:5px;}
+.ins-title{font-size:12px;font-weight:700;color:var(--text);margin-bottom:4px;line-height:1.3;}
+.ins-body{font-size:10.5px;color:var(--muted);line-height:1.5;}
+.obs-list{list-style:none;display:flex;flex-direction:column;gap:6px;margin-top:4px;}
+.obs-list li{font-size:10.5px;color:var(--muted);line-height:1.5;padding-left:12px;position:relative;}
+.obs-list li::before{content:'→';position:absolute;left:0;color:var(--blue);font-size:9px;}
+.ai-error{font-size:11px;color:var(--red);padding:8px 0;}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="sb-head">
+    <div class="sb-logo">MI Builder</div>
+    <div class="sb-sub">Market Insights Report Tool v4</div>
+  </div>
+  <div class="prog-bar"><div class="prog-fill" id="progFill" style="width:8%"></div></div>
+  <nav class="sb-nav">
+    <div class="sn-section">Report Setup</div>
+    <div class="sn-item active" data-pane="0" onclick="goPane(0)"><div class="sn-dot"></div><span class="sn-label">Basics</span><span class="sn-num">01</span></div>
+    <div class="sn-item" data-pane="1" onclick="goPane(1)"><div class="sn-dot"></div><span class="sn-label">Talent Pool</span><span class="sn-num">02</span></div>
+    <div class="sn-item" data-pane="2" onclick="goPane(2)"><div class="sn-dot"></div><span class="sn-label">Metro Cities</span><span class="sn-num">03</span></div>
+    <div class="sn-section">People Data</div>
+    <div class="sn-item" data-pane="3" onclick="goPane(3)"><div class="sn-dot"></div><span class="sn-label">Gender Diversity</span><span class="sn-num">04</span></div>
+    <div class="sn-item" data-pane="4" onclick="goPane(4)"><div class="sn-dot"></div><span class="sn-label">Experience Bands</span><span class="sn-num">05</span></div>
+    <div class="sn-item" data-pane="5" onclick="goPane(5)"><div class="sn-dot"></div><span class="sn-label">Salary Insights</span><span class="sn-num">06</span></div>
+    <div class="sn-section">Market Data</div>
+    <div class="sn-item" data-pane="6" onclick="goPane(6)"><div class="sn-dot"></div><span class="sn-label">Industry Split</span><span class="sn-num">07</span></div>
+    <div class="sn-item" data-pane="7" onclick="goPane(7)"><div class="sn-dot"></div><span class="sn-label">Education Split</span><span class="sn-num">08</span></div>
+    <div class="sn-item" data-pane="8" onclick="goPane(8)"><div class="sn-dot"></div><span class="sn-label">Quick Stats</span><span class="sn-num">09</span></div>
+    <div class="sn-section">Finalise</div>
+    <div class="sn-item" data-pane="9" onclick="goPane(9)"><div class="sn-dot"></div><span class="sn-label">Boolean String</span><span class="sn-num">10</span></div>
+    <div class="sn-item" data-pane="10" onclick="goPane(10)"><div class="sn-dot"></div><span class="sn-label">Disclaimers</span><span class="sn-num">11</span></div>
+    <div class="sn-item" data-pane="11" onclick="goPane(11)"><div class="sn-dot"></div><span class="sn-label">AI Insights</span><span class="sn-num">12</span></div>
+  </nav>
+  <div class="sb-foot">
+    <div>
+      <div class="tpl-label">Report Template</div>
+      <div class="tpl-grid">
+        <button class="tpl-btn on" data-tpl="dark" onclick="setTpl('dark',this)">
+          <div class="tpl-swatch" style="background:linear-gradient(135deg,#07091a 50%,#00d4aa 50%);"></div>
+          <span class="tpl-name">Dark Terminal</span>
+        </button>
+        <button class="tpl-btn" data-tpl="light" onclick="setTpl('light',this)">
+          <div class="tpl-swatch" style="background:linear-gradient(135deg,#f7f4ef 50%,#d63031 50%);"></div>
+          <span class="tpl-name">Editorial</span>
+        </button>
+        <button class="tpl-btn" data-tpl="corporate" onclick="setTpl('corporate',this)">
+          <div class="tpl-swatch" style="background:linear-gradient(135deg,#ffffff 50%,#1a3a6b 50%);"></div>
+          <span class="tpl-name">Corporate</span>
+        </button>
+        <button class="tpl-btn" data-tpl="slate" onclick="setTpl('slate',this)">
+          <div class="tpl-swatch" style="background:linear-gradient(135deg,#1c2333 50%,#f59e0b 50%);"></div>
+          <span class="tpl-name">Midnight</span>
+        </button>
+      </div>
+    </div>
+    <button class="btn-ai" id="aiBtn" onclick="generateInsights()">✦ Analyse Data</button>
+    <button class="btn-gen" onclick="generateReport()">⚡ Generate Report</button>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div>
+      <div class="section-title" id="paneTitle">Report Basics</div>
+      <div class="section-hint" id="paneHint">Enter core role details</div>
+    </div>
+    <div class="nav-arrows">
+      <button class="nav-btn" onclick="goPane(currentPane-1)">← Prev</button>
+      <button class="nav-btn" onclick="goPane(currentPane+1)">Next →</button>
+    </div>
+  </div>
+
+  <div class="form-area">
+
+    <!-- PANE 0: Basics -->
+    <div class="pane on" id="pane0">
+      <div class="sc"><div class="sc-title">Report Identity</div>
+        <div class="frow c2">
+          <div class="fg"><label>Job Title / Role</label><input id="jobTitle" value="Data Engineer"></div>
+          <div class="fg"><label>Hiring Location</label><input id="hiringCity" value="Mumbai"></div>
+        </div>
+        <div class="frow c3">
+          <div class="fg"><label>Research Date</label><input id="researchDate" value="March 2026"></div>
+          <div class="fg"><label>Source</label><input id="source" value="LinkedIn Talent Insights"></div>
+          <div class="fg"><label>Scope</label><input id="scope" value="Active Profiles (Last 12 Months)"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PANE 1: Talent Pool -->
+    <div class="pane" id="pane1">
+      <div class="sc"><div class="sc-title">India Talent Pool</div>
+        <div class="frow c4">
+          <div class="fg"><label>Total India Pool</label><input id="indiaPool" value="1.24"></div>
+          <div class="fg"><label>Unit</label><select id="indiaUnit"><option value="L" selected>L (Lakhs)</option><option value="K">K (Thousands)</option></select></div>
+          <div class="fg"><label>YoY Growth %</label><input id="yoyGrowth" value="8.2"></div>
+          <div class="fg"></div>
+        </div>
+      </div>
+      <div class="sc"><div class="sc-title">Relocation Ready</div>
+        <div class="frow c4">
+          <div class="fg"><label>Count</label><input id="relocCount" value="45.2"></div>
+          <div class="fg"><label>Unit</label><select id="relocUnit"><option value="K" selected>K</option><option value="L">L</option></select></div>
+          <div class="fg"><label>% of India Pool</label><input id="relocPct" value="36"></div>
+          <div class="fg"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PANE 2: Metro Cities -->
+    <div class="pane" id="pane2">
+      <div class="sc"><div class="sc-title">Top Metro Cities</div>
+        <table class="dtable">
+          <thead><tr><th style="width:45%">City Name</th><th>Candidate Count</th><th style="width:36px"></th></tr></thead>
+          <tbody id="citiesBody"></tbody>
+        </table>
+        <button class="add-row-btn" onclick="addCity()">+ Add City</button>
+      </div>
+    </div>
+
+    <!-- PANE 3: Gender -->
+    <div class="pane" id="pane3">
+      <div class="sc"><div class="sc-title">India — Gender Split</div>
+        <div class="frow c2">
+          <div class="fg"><label>Male %</label><input id="indiaMale" value="72"></div>
+          <div class="fg"><label>Female %</label><input id="indiaFemale" value="28"></div>
+        </div>
+      </div>
+      <div class="sc"><div class="sc-title">Hiring City — Gender Split</div>
+        <div class="frow c2">
+          <div class="fg"><label>Male %</label><input id="cityMale" value="70"></div>
+          <div class="fg"><label>Female %</label><input id="cityFemale" value="30"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PANE 4: Experience Bands (fully editable) -->
+    <div class="pane" id="pane4">
+      <div class="sc"><div class="sc-title">Experience Bands</div>
+        <p style="font-size:11px;color:var(--muted);margin-bottom:12px;">Define your own experience ranges. These labels are used across all charts and tables. Then enter candidate counts per band per city.</p>
+        <table class="dtable" style="margin-bottom:14px;">
+          <thead><tr><th>Band Label (e.g. 0–3 yrs, 3–6 yrs)</th><th style="width:36px"></th></tr></thead>
+          <tbody id="bandsBody"></tbody>
+        </table>
+        <button class="add-row-btn" onclick="addBand()">+ Add Band</button>
+      </div>
+      <div class="sc" id="expDataSection"><div class="sc-title">Candidate Count by City & Band</div>
+        <div class="city-tabs" id="expCityTabs"></div>
+        <div id="expCityPanels"></div>
+      </div>
+    </div>
+
+    <!-- PANE 5: Salary -->
+    <div class="pane" id="pane5">
+      <div class="sc"><div class="sc-title">Salary Insights by City</div>
+        <p style="font-size:11px;color:var(--muted);margin-bottom:12px;">Enter Avg CTC and Max CTC (₹ Lakhs p.a.) for each band per city.</p>
+        <div class="city-tabs" id="salCityTabs"></div>
+        <div id="salCityPanels"></div>
+      </div>
+    </div>
+
+    <!-- PANE 6: Industry -->
+    <div class="pane" id="pane6">
+      <div class="sc"><div class="sc-title">Industry Bifurcation</div>
+        <table class="dtable">
+          <thead><tr><th style="width:50%">Industry</th><th>% of Pool</th><th style="width:36px"></th></tr></thead>
+          <tbody id="industryBody"></tbody>
+        </table>
+        <button class="add-row-btn" onclick="addIndustry()">+ Add Industry</button>
+      </div>
+    </div>
+
+    <!-- PANE 7: Education -->
+    <div class="pane" id="pane7">
+      <div class="sc"><div class="sc-title">Education Split</div>
+        <table class="dtable">
+          <thead><tr><th style="width:50%">Degree / Qualification</th><th>% of Pool</th><th style="width:36px"></th></tr></thead>
+          <tbody id="eduBody"></tbody>
+        </table>
+        <button class="add-row-btn" onclick="addEdu()">+ Add Education</button>
+      </div>
+    </div>
+
+    <!-- PANE 8: Quick Stats -->
+    <div class="pane" id="pane8">
+      <div class="sc"><div class="sc-title">Quick Stats — Hiring City</div>
+        <div class="frow c2">
+          <div class="fg"><label>Median Experience (yrs)</label><input id="medExp" value="6.2"></div>
+          <div class="fg"><label>Median Salary (₹L p.a.)</label><input id="medSal" value="14"></div>
+        </div>
+        <div class="frow c2">
+          <div class="fg"><label>Actively Looking %</label><input id="activePct" value="22"></div>
+          <div class="fg"><label>Top Skill Cluster</label><input id="topSkills" value="Python · Spark · SQL · AWS"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PANE 9: Boolean -->
+    <div class="pane" id="pane9">
+      <div class="sc"><div class="sc-title">Boolean Search String</div>
+        <div class="fg"><label>Search String</label>
+          <textarea id="boolString" rows="5">("Data Engineer" OR "ETL Developer" OR "Big Data Engineer") AND (Python OR PySpark) AND (SQL OR Hive) AND (AWS OR Databricks OR Snowflake) NOT ("Data Analyst" OR "BI Developer")</textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- PANE 10: Disclaimers -->
+    <div class="pane" id="pane10">
+      <div class="sc"><div class="sc-title">Per-Section Disclaimers</div>
+        <div class="disc-hint">💡 Each disclaimer appears as a footnote under its section. Leave blank to hide.</div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div class="fg"><label>Talent Pool &amp; Relocation</label><textarea id="disc_pool" rows="2">Counts reflect profiles matching the Boolean search at research date and are subject to change. Relocation intent is based on stated LinkedIn preferences only.</textarea></div>
+          <div class="fg"><label>Metro Cities</label><textarea id="disc_cities" rows="2">City-level data is based on profile location as listed on LinkedIn and may include professionals in adjacent areas.</textarea></div>
+          <div class="fg"><label>Gender Diversity</label><textarea id="disc_gender" rows="2">Gender data is inferred from profile information using LinkedIn's demographic estimation. Actual figures may vary.</textarea></div>
+          <div class="fg"><label>Experience Range</label><textarea id="disc_exp" rows="2">Experience ranges are self-reported on LinkedIn profiles and may not reflect verified employment history.</textarea></div>
+          <div class="fg"><label>Salary Insights</label><textarea id="disc_salary" rows="2">Salary figures are indicative and sourced from publicly available market data. Actual CTC varies by company, role seniority, and negotiation.</textarea></div>
+          <div class="fg"><label>Industry Bifurcation</label><textarea id="disc_industry" rows="2">Industry classification is based on the candidate's current or most recent employer as listed on LinkedIn.</textarea></div>
+          <div class="fg"><label>Education Split</label><textarea id="disc_edu" rows="2">Education data is self-reported. Candidates with multiple qualifications may appear in more than one category.</textarea></div>
+          <div class="fg"><label>General Footer</label><textarea id="disc_general" rows="2">This report is for talent intelligence purposes only. Data sourced from LinkedIn Talent Insights. All figures are approximate.</textarea></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PANE 11: AI Insights -->
+    <div class="pane" id="pane11">
+      <div class="sc"><div class="sc-title">AI Insights</div>
+        <p style="font-size:11px;color:var(--muted);margin-bottom:14px;">Fill in all your data first, then click <b style="color:var(--green)">✦ Analyse Data</b> in the sidebar. Insights are computed instantly from your inputs — no API key needed — and get embedded in the generated report.</p>
+        <div id="insightsPanel">
+          <div class="ai-panel" style="text-align:center;padding:24px;">
+            <div style="font-size:28px;margin-bottom:8px;">✦</div>
+            <div style="font-size:12px;color:var(--muted);">No insights generated yet.<br>Click "✦ Generate AI Insights" in the sidebar to analyse your data.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /form-area -->
+</div><!-- /main -->
+</div><!-- /app -->
+
+<script>
+/* ═══════════════════════════════════════
+   STATE
+═══════════════════════════════════════ */
+let currentPane=0, selectedTpl='dark';
+let aiInsights=null;
+
+const paneInfo=[
+  {title:'Report Basics',hint:'Role, location, date and data source'},
+  {title:'Talent Pool',hint:'India total pool and relocation-ready numbers'},
+  {title:'Metro Cities',hint:'Top cities and their talent counts'},
+  {title:'Gender Diversity',hint:'Male / Female split for India and hiring city'},
+  {title:'Experience Bands',hint:'Define custom bands and enter counts per city'},
+  {title:'Salary Insights',hint:'Avg and Max CTC per band per city'},
+  {title:'Industry Bifurcation',hint:'Industry breakdown of hiring city talent'},
+  {title:'Education Split',hint:'Qualification breakdown of India pool'},
+  {title:'Quick Stats',hint:'Key headline metrics for the hiring city'},
+  {title:'Boolean String',hint:'Search query used for this research'},
+  {title:'Disclaimers',hint:'Per-section footnotes for each data point'},
+  {title:'AI Insights',hint:'Automated analysis and recommendations'},
+];
+
+function goPane(n){
+  if(n<0||n>11) return;
+  document.querySelectorAll('.pane').forEach(p=>p.classList.remove('on'));
+  document.getElementById('pane'+n).classList.add('on');
+  document.querySelectorAll('.sn-item').forEach(i=>i.classList.remove('active'));
+  document.querySelector('[data-pane="'+n+'"]').classList.add('active');
+  document.getElementById('paneTitle').textContent=paneInfo[n].title;
+  document.getElementById('paneHint').textContent=paneInfo[n].hint;
+  document.getElementById('progFill').style.width=((n+1)/12*100)+'%';
+  currentPane=n;
+  if(n===4){renderBands();buildExpPanels();}
+  if(n===5) buildSalPanels();
+}
+
+function setTpl(t,el){
+  selectedTpl=t;
+  document.querySelectorAll('.tpl-btn').forEach(b=>b.classList.remove('on'));
+  el.classList.add('on');
+}
+
+/* ── CITIES ── */
+let cities=[
+  {name:'Bangalore',count:'35000'},{name:'Mumbai',count:'28000'},{name:'Delhi NCR',count:'22000'},
+  {name:'Pune',count:'18000'},{name:'Hyderabad',count:'15000'},{name:'Chennai',count:'6500'},
+];
+function renderCities(){
+  document.getElementById('citiesBody').innerHTML=cities.map((c,i)=>`<tr>
+    <td><input value="${c.name}" oninput="cities[${i}].name=this.value"></td>
+    <td><input value="${c.count}" oninput="cities[${i}].count=this.value"></td>
+    <td><button class="del-btn" onclick="delCity(${i})">×</button></td>
+  </tr>`).join('');
+}
+function addCity(){cities.push({name:'',count:''});renderCities();}
+function delCity(i){cities.splice(i,1);renderCities();}
+renderCities();
+
+/* ── EXPERIENCE BANDS (fully editable) ── */
+let expBands=['0–3 yrs','3–6 yrs','6–10 yrs','10+ yrs'];
+function renderBands(){
+  document.getElementById('bandsBody').innerHTML=expBands.map((b,i)=>`<tr>
+    <td><input value="${b}" oninput="expBands[${i}]=this.value;rebuildExpData()" placeholder="e.g. 2-5 yrs"></td>
+    <td><button class="del-btn" onclick="delBand(${i})">×</button></td>
+  </tr>`).join('');
+}
+function addBand(){expBands.push('');renderBands();}
+function delBand(i){expBands.splice(i,1);rebuildExpData();renderBands();}
+function rebuildExpData(){
+  // trim/add columns in expData for each city
+  cities.forEach(c=>{
+    const cur=expData[c.name]||[];
+    expData[c.name]=expBands.map((_,i)=>cur[i]||'');
+  });
+  buildExpPanels();
+  buildSalPanels();
+}
+renderBands();
+
+/* ── EXPERIENCE DATA ── */
+let expData={
+  'Bangalore':['10500','14800','7200','2500'],'Mumbai':['8200','11500','5800','2500'],
+  'Delhi NCR':['6800','9200','4000','2000'],'Pune':['5500','7800','3400','1300'],
+  'Hyderabad':['4800','6500','2800','900'],'Chennai':['1500','3000','1200','800'],
+};
+let expActiveCity=null;
+function buildExpPanels(){
+  const tabs=document.getElementById('expCityTabs');
+  const panels=document.getElementById('expCityPanels');
+  const cs=cities.filter(c=>c.name.trim());
+  if(!cs.length){tabs.innerHTML='';panels.innerHTML='<div class="no-cities-msg">No cities yet. <a onclick="goPane(2)">Go to Metro Cities →</a></div>';return;}
+  if(!expActiveCity||!cs.find(c=>c.name===expActiveCity)) expActiveCity=cs[0].name;
+  tabs.innerHTML=cs.map(c=>`<div class="ctab ${c.name===expActiveCity?'on':''}" onclick="setExpCity('${c.name}')">${c.name}</div>`).join('');
+  panels.innerHTML=cs.map(c=>{
+    if(!expData[c.name]||expData[c.name].length!==expBands.length) expData[c.name]=expBands.map((_,i)=>(expData[c.name]||[])[i]||'');
+    return `<div class="city-panel ${c.name===expActiveCity?'on':''}" id="exppanel_${safe(c.name)}">
+      <div class="frow" style="grid-template-columns:repeat(${Math.min(expBands.length,4)},1fr);">
+        ${expBands.map((b,i)=>`<div class="fg"><label>${b}</label><input value="${expData[c.name][i]||''}" oninput="expData['${c.name}'][${i}]=this.value" placeholder="Count"></div>`).join('')}
+      </div>
+    </div>`;
+  }).join('');
+}
+function setExpCity(name){
+  expActiveCity=name;
+  document.querySelectorAll('#expCityTabs .ctab').forEach(t=>t.classList.toggle('on',t.textContent===name));
+  document.querySelectorAll('#expCityPanels .city-panel').forEach(p=>p.classList.remove('on'));
+  const el=document.getElementById('exppanel_'+safe(name));
+  if(el) el.classList.add('on');
+}
+
+/* ── SALARY DATA ── */
+let salData={
+  'Bangalore':[{avg:'7.2',max:'12',count:'10500'},{avg:'14.0',max:'22',count:'14800'},{avg:'22.0',max:'35',count:'7200'},{avg:'30.0',max:'55',count:'2500'}],
+  'Mumbai':[{avg:'6.5',max:'10',count:'8200'},{avg:'12.0',max:'18',count:'11500'},{avg:'18.5',max:'28',count:'5800'},{avg:'25.0',max:'45',count:'2500'}],
+  'Delhi NCR':[{avg:'6.0',max:'10',count:'6800'},{avg:'11.5',max:'18',count:'9200'},{avg:'17.0',max:'26',count:'4000'},{avg:'23.0',max:'40',count:'2000'}],
+  'Pune':[{avg:'5.8',max:'9',count:'5500'},{avg:'10.5',max:'16',count:'7800'},{avg:'16.0',max:'24',count:'3400'},{avg:'21.0',max:'36',count:'1300'}],
+  'Hyderabad':[{avg:'6.2',max:'10',count:'4800'},{avg:'11.0',max:'17',count:'6500'},{avg:'16.5',max:'25',count:'2800'},{avg:'22.0',max:'38',count:'900'}],
+  'Chennai':[{avg:'5.5',max:'9',count:'1500'},{avg:'10.0',max:'15',count:'3000'},{avg:'15.5',max:'23',count:'1200'},{avg:'20.0',max:'34',count:'800'}],
+};
+let salActiveCity=null;
+function buildSalPanels(){
+  const tabs=document.getElementById('salCityTabs');
+  const panels=document.getElementById('salCityPanels');
+  const cs=cities.filter(c=>c.name.trim());
+  if(!cs.length){tabs.innerHTML='';panels.innerHTML='<div class="no-cities-msg">No cities yet. <a onclick="goPane(2)">Go to Metro Cities →</a></div>';return;}
+  if(!salActiveCity||!cs.find(c=>c.name===salActiveCity)) salActiveCity=cs[0].name;
+  tabs.innerHTML=cs.map(c=>`<div class="ctab ${c.name===salActiveCity?'on':''}" onclick="setSalCity('${c.name}')">${c.name}</div>`).join('');
+  panels.innerHTML=cs.map(c=>{
+    if(!salData[c.name]||salData[c.name].length!==expBands.length){
+      salData[c.name]=expBands.map((_,i)=>(salData[c.name]||[])[i]||{avg:'',max:'',count:''});
+    }
+    return `<div class="city-panel ${c.name===salActiveCity?'on':''}" id="salpanel_${safe(c.name)}">
+      <table class="dtable"><thead><tr><th>Band</th><th>Avg CTC (₹L)</th><th>Max CTC (₹L)</th><th>Count</th></tr></thead>
+      <tbody>${expBands.map((b,i)=>`<tr>
+        <td style="padding:4px 7px;color:var(--muted);font-size:10.5px;">${b}</td>
+        <td><input value="${salData[c.name][i]?.avg||''}" oninput="salData['${c.name}'][${i}].avg=this.value"></td>
+        <td><input value="${salData[c.name][i]?.max||''}" oninput="salData['${c.name}'][${i}].max=this.value"></td>
+        <td><input value="${salData[c.name][i]?.count||''}" oninput="salData['${c.name}'][${i}].count=this.value"></td>
+      </tr>`).join('')}</tbody></table>
+    </div>`;
+  }).join('');
+}
+function setSalCity(name){
+  salActiveCity=name;
+  document.querySelectorAll('#salCityTabs .ctab').forEach(t=>t.classList.toggle('on',t.textContent===name));
+  document.querySelectorAll('#salCityPanels .city-panel').forEach(p=>p.classList.remove('on'));
+  const el=document.getElementById('salpanel_'+safe(name));
+  if(el) el.classList.add('on');
+}
+
+/* ── INDUSTRY ── */
+let industries=[
+  {name:'IT Services',pct:'35'},{name:'Product / SaaS',pct:'28'},{name:'BFSI',pct:'15'},
+  {name:'E-Commerce',pct:'12'},{name:'Consulting',pct:'5'},{name:'Telecom',pct:'3'},{name:'Others',pct:'2'},
+];
+function renderIndustry(){
+  document.getElementById('industryBody').innerHTML=industries.map((r,i)=>`<tr>
+    <td><input value="${r.name}" oninput="industries[${i}].name=this.value"></td>
+    <td><input value="${r.pct}" oninput="industries[${i}].pct=this.value" style="width:75px"></td>
+    <td><button class="del-btn" onclick="delIndustry(${i})">×</button></td>
+  </tr>`).join('');
+}
+function addIndustry(){industries.push({name:'',pct:''});renderIndustry();}
+function delIndustry(i){industries.splice(i,1);renderIndustry();}
+renderIndustry();
+
+/* ── EDUCATION ── */
+let edus=[
+  {name:'BE / B.Tech',pct:'55'},{name:'MCA',pct:'15'},{name:'B.Sc (CS/IT)',pct:'12'},
+  {name:'M.Tech / ME',pct:'8'},{name:'MBA',pct:'5'},{name:'Others',pct:'5'},
+];
+function renderEdu(){
+  document.getElementById('eduBody').innerHTML=edus.map((r,i)=>`<tr>
+    <td><input value="${r.name}" oninput="edus[${i}].name=this.value"></td>
+    <td><input value="${r.pct}" oninput="edus[${i}].pct=this.value" style="width:75px"></td>
+    <td><button class="del-btn" onclick="delEdu(${i})">×</button></td>
+  </tr>`).join('');
+}
+function addEdu(){edus.push({name:'',pct:''});renderEdu();}
+function delEdu(i){edus.splice(i,1);renderEdu();}
+renderEdu();
+
+function safe(s){return s.replace(/[^a-zA-Z0-9]/g,'_');}
+function v(id){return document.getElementById(id)?.value||'';}
+
+function collectData(){
+  return {
+    jobTitle:v('jobTitle'),hiringCity:v('hiringCity'),researchDate:v('researchDate'),
+    source:v('source'),scope:v('scope'),
+    indiaPool:v('indiaPool'),indiaUnit:v('indiaUnit'),yoyGrowth:v('yoyGrowth'),
+    relocCount:v('relocCount'),relocUnit:v('relocUnit'),relocPct:v('relocPct'),
+    cities:cities.filter(c=>c.name.trim()),
+    expBands:[...expBands],
+    indiaMale:v('indiaMale'),indiaFemale:v('indiaFemale'),
+    cityMale:v('cityMale'),cityFemale:v('cityFemale'),
+    expData,salData,
+    industries:industries.filter(i=>i.name.trim()),
+    edus:edus.filter(e=>e.name.trim()),
+    medExp:v('medExp'),medSal:v('medSal'),activePct:v('activePct'),topSkills:v('topSkills'),
+    boolString:v('boolString'),
+    disc:{pool:v('disc_pool'),cities:v('disc_cities'),gender:v('disc_gender'),
+      exp:v('disc_exp'),salary:v('disc_salary'),industry:v('disc_industry'),
+      edu:v('disc_edu'),general:v('disc_general')},
+    aiInsights
+  };
+}
+
+/* ═══════════════════════════════════════
+   DATA-DRIVEN INSIGHTS ENGINE (no API)
+═══════════════════════════════════════ */
+function generateInsights(){
+  const btn=document.getElementById('aiBtn');
+  btn.classList.add('loading');
+  btn.textContent='⏳ Analysing...';
+  goPane(11);
+  const panel=document.getElementById('insightsPanel');
+  panel.innerHTML=`<div class="ai-panel"><div class="ai-loading"><div class="ai-dot"></div><div class="ai-dot"></div><div class="ai-dot"></div><span>Analysing talent data…</span></div></div>`;
+
+  // short async-like delay so the loader renders
+  setTimeout(()=>{
+    try{
+      const d=collectData();
+      aiInsights=computeInsights(d);
+      renderInsightsPanel(aiInsights, d);
+    } catch(e){
+      panel.innerHTML=`<div class="ai-panel"><div class="ai-error">⚠ Could not analyse data. Please fill in Talent Pool, Cities, Experience and Salary sections first.<br><small style="opacity:0.6">${e.message}</small></div></div>`;
+    }
+    btn.classList.remove('loading');
+    btn.textContent='↻ Re-Analyse';
+  }, 400);
+}
+
+/* Pure JS analysis — derives all insights from the data object */
+function computeInsights(d){
+  const cs = d.cities.filter(c=>c.name.trim() && parseInt(c.count)>0);
+  if(cs.length<1) throw new Error('Add at least one city with a candidate count.');
+
+  const bands = d.expBands;
+  const hiC   = d.hiringCity;
+
+  /* ── city stats ── */
+  const cityStats = cs.map(c=>{
+    const sal  = d.salData[c.name]||[];
+    const exp  = d.expData[c.name]||[];
+    const total= parseInt(c.count)||0;
+    const avgs = sal.map(r=>parseFloat(r.avg)||0).filter(v=>v>0);
+    const maxs = sal.map(r=>parseFloat(r.max)||0).filter(v=>v>0);
+    const counts= exp.map(v=>parseInt(v)||0);
+    const avgSal= avgs.length ? avgs.reduce((a,b)=>a+b,0)/avgs.length : 0;
+    const maxSal= maxs.length ? Math.max(...maxs) : 0;
+    const senior= bands.length>=3 ? (counts.slice(2).reduce((a,b)=>a+b,0)) : 0; // 3rd band+
+    const junior= counts.length>0 ? counts[0] : 0;
+    return {name:c.name, total, avgSal:+avgSal.toFixed(1), maxSal, sal, counts, senior, junior};
+  });
+
+  /* ── best city scoring ──
+     Criteria: (a) total pool size, (b) low avg salary, (c) relocation proximity,
+     (d) experience mix  */
+  const maxPool = Math.max(...cityStats.map(s=>s.total));
+  const maxAvg  = Math.max(...cityStats.map(s=>s.avgSal||99));
+  const minAvg  = Math.min(...cityStats.filter(s=>s.avgSal>0).map(s=>s.avgSal));
+
+  const scored = cityStats.map(s=>{
+    const poolScore  = s.total/maxPool * 40;                          // 40 pts
+    const costScore  = maxAvg>0 ? (1-(s.avgSal/maxAvg)) * 30 : 15;   // 30 pts (lower = better)
+    const mixScore   = s.total>0 ? Math.min(s.junior/s.total,0.6)*20 : 0; // 20 pts (junior availability)
+    const bonusHire  = s.name===hiC ? 5 : 0;                         // 5 bonus for hiring city
+    return {...s, score: +(poolScore+costScore+mixScore+bonusHire).toFixed(1)};
+  }).sort((a,b)=>b.score-a.score);
+
+  const best      = scored[0];
+  const bestRaw   = Math.round(best.score/10);
+  const costLeader= [...cityStats].filter(s=>s.avgSal>0).sort((a,b)=>a.avgSal-b.avgSal)[0];
+  const costPricey= [...cityStats].filter(s=>s.avgSal>0).sort((a,b)=>b.avgSal-a.avgSal)[0];
+  const savingPct = costLeader&&costPricey&&costPricey.avgSal>0
+    ? Math.round((1-costLeader.avgSal/costPricey.avgSal)*100) : null;
+
+  /* ── gender ── */
+  const hiringCityGender = {m:parseFloat(d.cityMale)||0, f:parseFloat(d.cityFemale)||0};
+  const indiaGender      = {m:parseFloat(d.indiaMale)||0, f:parseFloat(d.indiaFemale)||0};
+
+  /* ── top industry ── */
+  const topInd  = d.industries.length ? [...d.industries].sort((a,b)=>parseFloat(b.pct)-parseFloat(a.pct))[0] : null;
+  const topEdu  = d.edus.length       ? [...d.edus].sort((a,b)=>parseFloat(b.pct)-parseFloat(a.pct))[0] : null;
+
+  /* ── talent risk ── */
+  const hiCityStats = cityStats.find(s=>s.name===hiC)||cityStats[0];
+  const relocPct    = parseFloat(d.relocPct)||0;
+  const activePct   = parseFloat(d.activePct)||0;
+  let riskTitle='', riskDetail='';
+  if(relocPct<30){
+    riskTitle='Low Relocation Willingness';
+    riskDetail=`Only ${relocPct}% of the India pool is open to relocating to ${hiC}. This significantly constrains the addressable talent, especially for senior roles. Hiring teams should prioritise local talent and consider remote/hybrid models.`;
+  } else if(activePct<20){
+    riskTitle='Low Active Candidate Ratio';
+    riskDetail=`Only ${activePct}% of the ${hiC} pool is actively looking. The majority of talent is passive, requiring proactive sourcing and employer branding investment rather than reactive job postings.`;
+  } else if(hiCityStats && hiCityStats.avgSal>0 && hiCityStats.avgSal>=(maxAvg*0.9)){
+    riskTitle='High Salary Pressure in Hiring City';
+    riskDetail=`${hiC} has one of the highest average CTCs (₹${hiCityStats.avgSal}L) among the cities studied. Budget planning must account for above-average compensation expectations, particularly for experienced candidates.`;
+  } else {
+    riskTitle='Talent Concentration Risk';
+    riskDetail=`${Math.round(scored[0].total/cs.reduce((a,c)=>a+c.total,0)*100)}% of the available talent pool is concentrated in ${scored[0].name}. Over-reliance on a single city market creates sourcing risk if competitive hiring intensifies there.`;
+  }
+
+  /* ── alternate cities (top 2 non-hiring, non-best) ── */
+  const altCities = scored.filter(s=>s.name!==hiC && s.name!==best.name).slice(0,2).map(s=>{
+    const reason = s.avgSal<=costLeader.avgSal+2
+      ? `${s.name} offers a pool of ${s.total.toLocaleString()} candidates with competitive avg CTC of ₹${s.avgSal}L — a cost-efficient alternative worth exploring.`
+      : `${s.name} has a significant pool of ${s.total.toLocaleString()} candidates and could support expansion hiring if ${hiC} supply tightens.`;
+    return {city:s.name, reason};
+  });
+
+  /* ── key observations ── */
+  const obs = [];
+  const totalPool = cs.reduce((a,c)=>a+c.total,0);
+
+  // Pool size observation
+  obs.push(`The total addressable talent pool across ${cs.length} cities stands at ${totalPool.toLocaleString()} candidates, with ${best.name} leading at ${best.total.toLocaleString()} (${Math.round(best.total/totalPool*100)}% of the multi-city pool).`);
+
+  // Salary spread
+  if(costLeader && costPricey && savingPct!==null){
+    obs.push(`There is a significant salary spread across cities — ${costLeader.name} offers the most cost-efficient talent at an avg CTC of ₹${costLeader.avgSal}L, compared to ₹${costPricey.avgSal}L in ${costPricey.name}, representing a ${savingPct}% cost difference for similar profiles.`);
+  }
+
+  // Gender
+  if(hiringCityGender.f>0){
+    const gapVsIndia = (hiringCityGender.f - indiaGender.f).toFixed(1);
+    const gapDir = gapVsIndia>=0 ? 'slightly better' : 'slightly below';
+    obs.push(`Gender diversity in ${hiC} stands at ${hiringCityGender.f}% Female — ${gapDir} than the India average of ${indiaGender.f}%. The tech talent pool in this domain remains heavily male-dominated, indicating opportunity for targeted diversity hiring.`);
+  }
+
+  // Top industry
+  if(topInd){
+    obs.push(`${topInd.pct}% of the ${hiC} talent pool comes from ${topInd.name}, making it the dominant sourcing ground. Hiring from adjacent industries such as BFSI or E-Commerce can surface candidates with transferable skills and potentially lower competing demand.`);
+  }
+
+  // Relocation
+  if(relocPct>0){
+    obs.push(`${relocPct}% of the India-wide pool (${d.relocCount}${d.relocUnit}) is open to relocating to ${hiC}. This expands the effective talent base beyond local supply — particularly valuable for niche or senior roles where local availability is limited.`);
+  }
+
+  // Education
+  if(topEdu){
+    obs.push(`${topEdu.pct}% of the India talent pool holds a ${topEdu.name} degree, confirming it as the primary qualification pathway for this role. Screening criteria should remain flexible to include candidates from adjacent streams.`);
+  }
+
+  // YoY growth
+  if(parseFloat(d.yoyGrowth)>0){
+    obs.push(`The India talent pool for ${d.jobTitle} is growing at ${d.yoyGrowth}% year-on-year — indicating a healthy supply pipeline. However, demand for these skills is growing at a comparable or higher rate, keeping competition for quality profiles high.`);
+  }
+
+  /* ── best city reason ── */
+  const bestReason = `${best.name} leads with a talent pool of ${best.total.toLocaleString()} candidates`
+    + (best.avgSal>0 ? ` and an average CTC of ₹${best.avgSal}L` : '')
+    + ` — offering the strongest combination of volume, experience diversity, and sourcing viability. `
+    + (best.name===hiC ? `As the hiring location itself, it eliminates relocation dependency and reduces onboarding friction.`
+       : `While not the hiring city, it represents the richest sourcing market for relocation-ready candidates.`);
+
+  /* ── hiring tip ── */
+  let tip = '';
+  if(activePct>0 && activePct<25){
+    tip = `With only ${activePct}% of ${hiC} talent actively looking, invest in a passive candidate engagement strategy — targeted InMail campaigns, alumni networks, and referral incentives will yield better conversion than job board postings alone.`;
+  } else if(savingPct && savingPct>20){
+    tip = `Consider a distributed hiring model — ${costLeader.name} offers talent at ${savingPct}% lower cost than the most expensive market. Even hiring 30–40% of roles from ${costLeader.name} can deliver significant annual savings without compromising quality.`;
+  } else {
+    tip = `Focus Boolean search refinement on candidates from the top two industries (${d.industries.slice(0,2).map(i=>i.name).join(', ')}) first — they represent the majority of the pool and are likely to have the most directly applicable experience.`;
+  }
+
+  return {
+    best_city:{city:best.name, score:`${Math.min(bestRaw+4,10)}/10`, reason:bestReason},
+    cost_leader:{city:costLeader?.name||'N/A', avg_saving: savingPct!==null?`${savingPct}%`:'', reason:costLeader?`${costLeader.name} has the lowest average CTC (₹${costLeader.avgSal}L) among the cities studied, making it the most budget-efficient sourcing market.`:''},
+    diversity_leader:{city:hiC, female_pct:`${hiringCityGender.f}%`, reason:`${hiC} leads the diversity metric with ${hiringCityGender.f}% female representation. While still below parity, this is ${hiringCityGender.f>=indiaGender.f?'above':'below'} the India average of ${indiaGender.f}%.`},
+    talent_risk:{concern:riskTitle, detail:riskDetail},
+    alternate_cities: altCities,
+    key_observations: obs.slice(0,6),
+    hiring_tip: tip
+  };
+}
+
+function renderInsightsPanel(ins, d){
+  if(!ins) return;
+  const altCities=(ins.alternate_cities||[]).map(c=>`<div style="padding:5px 0;border-bottom:1px solid var(--border);"><span style="color:var(--text);font-weight:600;">${c.city}</span> — <span style="color:var(--muted);font-size:10.5px;">${c.reason}</span></div>`).join('')||'';
+  const obs=(ins.key_observations||[]).map(o=>`<li>${o}</li>`).join('');
+
+  document.getElementById('insightsPanel').innerHTML=`
+  <div style="display:flex;flex-direction:column;gap:12px;">
+    <div class="insight-grid">
+      <div class="insight-card" style="border-left:3px solid var(--green);">
+        <div class="ins-tag" style="color:var(--green);">★ Best City Overall</div>
+        <div class="ins-title">${ins.best_city?.city||'—'} <span style="font-size:10px;color:var(--muted);font-weight:400;">${ins.best_city?.score||''}</span></div>
+        <div class="ins-body">${ins.best_city?.reason||''}</div>
+      </div>
+      <div class="insight-card" style="border-left:3px solid var(--yellow);">
+        <div class="ins-tag" style="color:var(--yellow);">₹ Cost Leader</div>
+        <div class="ins-title">${ins.cost_leader?.city||'—'} <span style="font-size:10px;color:var(--muted);font-weight:400;">${ins.cost_leader?.avg_saving?'~'+ins.cost_leader.avg_saving+' cheaper':''}</span></div>
+        <div class="ins-body">${ins.cost_leader?.reason||''}</div>
+      </div>
+      <div class="insight-card" style="border-left:3px solid var(--blue);">
+        <div class="ins-tag" style="color:var(--blue);">♀ Diversity Snapshot</div>
+        <div class="ins-title">${ins.diversity_leader?.city||'—'} <span style="font-size:10px;color:var(--muted);font-weight:400;">${ins.diversity_leader?.female_pct||''} Female</span></div>
+        <div class="ins-body">${ins.diversity_leader?.reason||''}</div>
+      </div>
+      <div class="insight-card" style="border-left:3px solid var(--red);">
+        <div class="ins-tag" style="color:var(--red);">⚠ Talent Risk</div>
+        <div class="ins-title">${ins.talent_risk?.concern||'—'}</div>
+        <div class="ins-body">${ins.talent_risk?.detail||''}</div>
+      </div>
+    </div>
+    ${altCities?`<div class="insight-card"><div class="ins-tag" style="color:var(--muted);">📍 Alternate Hiring Cities</div><div style="margin-top:4px;">${altCities}</div></div>`:''}
+    <div class="insight-card">
+      <div class="ins-tag" style="color:var(--green);">↗ Key Observations</div>
+      <ul class="obs-list">${obs}</ul>
+    </div>
+    <div class="insight-card" style="background:rgba(52,211,153,0.06);border-color:rgba(52,211,153,0.2);">
+      <div class="ins-tag" style="color:var(--green);">💡 Hiring Tip</div>
+      <div class="ins-body" style="color:var(--text);font-size:11px;line-height:1.6;">${ins.hiring_tip||''}</div>
+    </div>
+  </div>`;
+}
+
+/* ═══════════════════════════════════════
+   REPORT GENERATOR
+═══════════════════════════════════════ */
+/* ═══════════════════════════════════════
+   REPORT GENERATOR
+═══════════════════════════════════════ */
+function generateReport(){
+  const d=collectData();
+  const html=buildReport(d, selectedTpl);
+  const blob=new Blob([html],{type:'text/html'});
+  window.open(URL.createObjectURL(blob),'_blank');
+}
+
+/* ── THEMES ── */
+const THEMES={
+  dark:{
+    bg:'#07091a',s1:'#0d1126',s2:'#131830',bdr:'#1b2545',tx:'#dde4f5',mt:'#5a6a90',
+    hdrBg:'#040610',grd:'rgba(27,37,69,0.6)',cTx:'#7a8aaa',
+    pal:['#00d4aa','#4d9fff','#ff6b35','#b97dff','#ffd60a','#00c2e0','#ff4d8d','#6be84d','#ffa41b'],
+    accent:'#00d4aa',badge:'#ff6b35',titleColor:'#fff',subColor:'#8a9abd',
+    font:"'IBM Plex Sans',sans-serif",monoFont:"'IBM Plex Mono',monospace",
+    kStyle:'font-family:"IBM Plex Mono",monospace;',
+    insightsBg:'rgba(13,17,38,0.9)',insightsBdr:'rgba(27,37,69,1)',
+    bwrapBg:'#131830',bwrapColor:'#00d4aa',bwrapKw:'#ff6b35',
+    gMale:'#4d9fff',gFemale:'#b97dff',
+    cardShadow:'none',
+  },
+  light:{
+    bg:'#f7f4ef',s1:'#ffffff',s2:'#f0ede8',bdr:'#e2dfd8',tx:'#2a3150',mt:'#6b7491',
+    hdrBg:'#121830',grd:'rgba(200,196,188,0.5)',cTx:'#6b7491',
+    pal:['#00897b','#2980b9','#d63031','#6c3483','#e67e22','#27ae60','#e91e8c','#16a085','#8e44ad'],
+    accent:'#00897b',badge:'#d63031',titleColor:'#fff',subColor:'#8a9abd',
+    font:"'DM Sans',sans-serif",monoFont:"'IBM Plex Mono',monospace",
+    kStyle:"font-family:'Fraunces',serif;",
+    insightsBg:'#ffffff',insightsBdr:'#e2dfd8',
+    bwrapBg:'#121830',bwrapColor:'#78e8d8',bwrapKw:'#ff6b35',
+    gMale:'#2980b9',gFemale:'#6c3483',
+    cardShadow:'0 1px 4px rgba(0,0,0,0.04)',
+  },
+  corporate:{
+    bg:'#f0f4f8',s1:'#ffffff',s2:'#e8edf4',bdr:'#d4dce8',tx:'#1a2740',mt:'#607090',
+    hdrBg:'#1a3a6b',grd:'rgba(180,192,210,0.5)',cTx:'#607090',
+    pal:['#1a7fd4','#e05c1a','#1a9e70','#8b40cc','#d4a017','#3a7abf','#cc3a5e','#2a8f6f','#7a5cbf'],
+    accent:'#1a7fd4',badge:'#e05c1a',titleColor:'#fff',subColor:'#a8bed8',
+    font:"'IBM Plex Sans',sans-serif",monoFont:"'IBM Plex Mono',monospace",
+    kStyle:'font-family:"IBM Plex Mono",monospace;',
+    insightsBg:'#ffffff',insightsBdr:'#d4dce8',
+    bwrapBg:'#1a3a6b',bwrapColor:'#7ab8e8',bwrapKw:'#e05c1a',
+    gMale:'#1a7fd4',gFemale:'#8b40cc',
+    cardShadow:'0 1px 6px rgba(26,58,107,0.08)',
+  },
+  slate:{
+    bg:'#151c2c',s1:'#1c2538',s2:'#222d42',bdr:'#2a3650',tx:'#e0e8f8',mt:'#5a6e90',
+    hdrBg:'#0e1320',grd:'rgba(42,54,80,0.7)',cTx:'#7a8aaa',
+    pal:['#f59e0b','#38bdf8','#f87171','#a78bfa','#4ade80','#fb923c','#e879f9','#34d399','#fbbf24'],
+    accent:'#f59e0b',badge:'#f87171',titleColor:'#fff',subColor:'#8a9abc',
+    font:"'DM Sans',sans-serif",monoFont:"'JetBrains Mono',monospace",
+    kStyle:'font-family:"JetBrains Mono",monospace;',
+    insightsBg:'rgba(28,37,56,0.9)',insightsBdr:'#2a3650',
+    bwrapBg:'#0e1320',bwrapColor:'#f59e0b',bwrapKw:'#f87171',
+    gMale:'#38bdf8',gFemale:'#a78bfa',
+    cardShadow:'none',
+  }
+};
+
+/* ── INDIA MAP ── */
+const CITY_COORDS={'delhi ncr':[77.2,28.6],'delhi':[77.2,28.6],'new delhi':[77.2,28.6],'noida':[77.3,28.5],'gurgaon':[77.0,28.4],'gurugram':[77.0,28.4],'chandigarh':[76.8,30.7],'jaipur':[75.8,26.9],'lucknow':[80.9,26.8],'mumbai':[72.9,19.1],'thane':[72.9,19.2],'pune':[73.9,18.5],'nagpur':[79.1,21.1],'surat':[72.8,21.2],'ahmedabad':[72.6,23.0],'rajkot':[70.8,22.3],'bangalore':[77.6,12.9],'bengaluru':[77.6,12.9],'hyderabad':[78.5,17.4],'chennai':[80.3,13.1],'coimbatore':[77.0,11.0],'kochi':[76.3,10.0],'kolkata':[88.4,22.6],'bhubaneswar':[85.8,20.3],'visakhapatnam':[83.3,17.7],'vijayawada':[80.6,16.5],'patna':[85.1,25.6],'ranchi':[85.3,23.4],'bhopal':[77.4,23.3],'indore':[75.9,22.7],'mysore':[76.6,12.3],'mangalore':[74.9,12.9],'dehradun':[78.0,30.3]};
+function cityXY(name){
+  const k=name.trim().toLowerCase();
+  let c=CITY_COORDS[k];
+  if(!c){for(const key of Object.keys(CITY_COORDS)){if(k.includes(key)||key.includes(k)){c=CITY_COORDS[key];break;}}}
+  if(!c) return null;
+  return {x:+(((c[0]-67.5)*8.28+5).toFixed(1)),y:+(((37.5-c[1])*10.1+5).toFixed(1))};
+}
+
+function buildIndiaMap(cs,pal,th){
+  const dk=(th==='dark'||th==='slate');
+  const mapBg=dk?'#080d1a':'#dce8f8';
+  const landFill=dk?'url(#lg1)':'url(#lg2)';
+  const landStr=dk?'#1e3060':'#a8bcd8';
+  const txtCol=dk?'#c8d8f0':'#2a3150';
+  const maxV=Math.max(...cs.map(c=>parseInt(c.count)||0),1);
+  const bubbles=cs.map((c,i)=>{
+    const pos=cityXY(c.name);
+    if(!pos) return '';
+    const v=parseInt(c.count)||0;
+    const r=Math.round(5+Math.sqrt(v/maxV)*18);
+    const col=pal[i%pal.length];
+    const lbl=v>=10000?Math.round(v/1000)+'K':v>=1000?(v/1000).toFixed(1)+'K':v;
+    const nm=c.name.length>9?c.name.split(' ')[0]:c.name;
+    return `<g><title>${c.name}: ${v.toLocaleString()} candidates</title>
+      <circle cx="${pos.x}" cy="${pos.y}" r="${r+5}" fill="${col}" opacity="0.1"/>
+      <circle cx="${pos.x}" cy="${pos.y}" r="${r}" fill="${col}" opacity="0.85" stroke="rgba(255,255,255,0.3)" stroke-width="1.2"/>
+      ${r>=9?`<text x="${pos.x}" y="${pos.y+3}" text-anchor="middle" fill="${dk?'#000':'#fff'}" font-size="${Math.min(r*0.6,8.5)}" font-weight="700" font-family="sans-serif" style="pointer-events:none;">${lbl}</text>`:''}
+      <text x="${pos.x}" y="${pos.y+r+10}" text-anchor="middle" fill="${txtCol}" font-size="7" font-weight="600" font-family="sans-serif" style="pointer-events:none;">${nm}</text>
+    </g>`;
+  }).join('');
+  return `<svg viewBox="0 0 275 318" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%;display:block;">
+  <defs>
+    <radialGradient id="lg1" cx="45%" cy="55%" r="55%"><stop offset="0%" stop-color="#1a2e52"/><stop offset="100%" stop-color="#0d1833"/></radialGradient>
+    <radialGradient id="lg2" cx="45%" cy="55%" r="55%"><stop offset="0%" stop-color="#c8d8f0"/><stop offset="100%" stop-color="#a8c0e0"/></radialGradient>
+    <filter id="g1"><feGaussianBlur stdDeviation="2.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>
+  <rect width="275" height="318" fill="${mapBg}" rx="5"/>
+  <path d="M 54,30 L 75,20 L 108,50 L 113,80 L 150,103 L 175,105 L 201,110 L 226,120 L 255,96 L 231,130 L 219,142 L 212,162 L 178,167 L 155,180 L 134,205 L 122,220 L 106,246 L 108,257 L 87,299 L 79,291 L 63,257 L 57,226 L 49,196 L 47,175 L 42,165 L 21,155 L 13,151 L 25,135 L 13,106 L 51,65 L 55,50 Z"
+    fill="${landFill}" stroke="${landStr}" stroke-width="1.2" stroke-linejoin="round"/>
+  <g filter="url(#g1)">${bubbles}</g>
+</svg>`;
+}
+
+/* ── AI INSIGHTS HTML for report ── */
+function buildInsightsHTML(ins, th){
+  if(!ins) return '';
+  const T=THEMES[th];
+  const dk=(th==='dark'||th==='slate');
+  const ib=T.insightsBg, ibdr=T.insightsBdr, itx=T.tx, imt=T.mt;
+  const pal=T.pal;
+  const altRoles=(ins.alternate_roles||[]).map(r=>`<span style="display:inline-block;background:${pal[1]}22;border:1px solid ${pal[1]}44;color:${pal[1]};border-radius:3px;padding:2px 7px;font-size:9px;margin:2px;">${r}</span>`).join('');
+  const altCities=(ins.alternate_cities||[]).map(c=>`<div style="padding:4px 0;border-bottom:1px solid ${ibdr};font-size:9.5px;"><b style="color:${itx};">${c.city}</b> — <span style="color:${imt};">${c.reason}</span></div>`).join('');
+  const obs=(ins.key_observations||[]).map(o=>`<li style="font-size:9px;color:${imt};padding:2px 0 2px 12px;position:relative;line-height:1.5;"><span style="position:absolute;left:0;color:${pal[1]};">→</span>${o}</li>`).join('');
+  return `
+<div style="background:${ib};border:1px solid ${ibdr};border-radius:7px;padding:13px 15px;margin-bottom:10px;page-break-inside:avoid;">
+  <div style="font-size:8.5px;font-weight:700;text-transform:uppercase;letter-spacing:1.8px;color:${pal[0]};margin-bottom:10px;">✦ AI Talent Intelligence — Automated Insights</div>
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:8px;">
+    <div style="background:${T.s2};border:1px solid ${ibdr};border-left:3px solid ${pal[0]};border-radius:5px;padding:9px 10px;">
+      <div style="font-size:7.5px;text-transform:uppercase;letter-spacing:1px;color:${pal[0]};font-weight:700;margin-bottom:4px;">★ Best City</div>
+      <div style="font-size:12px;font-weight:700;color:${itx};margin-bottom:3px;">${ins.best_city?.city||'—'} <span style="font-size:9px;color:${imt};font-weight:400;">${ins.best_city?.score||''}</span></div>
+      <div style="font-size:9px;color:${imt};line-height:1.5;">${ins.best_city?.reason||''}</div>
+    </div>
+    <div style="background:${T.s2};border:1px solid ${ibdr};border-left:3px solid ${pal[4]||pal[3]};border-radius:5px;padding:9px 10px;">
+      <div style="font-size:7.5px;text-transform:uppercase;letter-spacing:1px;color:${pal[4]||pal[3]};font-weight:700;margin-bottom:4px;">₹ Cost Leader</div>
+      <div style="font-size:12px;font-weight:700;color:${itx};margin-bottom:3px;">${ins.cost_leader?.city||'—'}</div>
+      <div style="font-size:9px;color:${imt};line-height:1.5;">${ins.cost_leader?.reason||''}</div>
+    </div>
+    <div style="background:${T.s2};border:1px solid ${ibdr};border-left:3px solid ${pal[1]};border-radius:5px;padding:9px 10px;">
+      <div style="font-size:7.5px;text-transform:uppercase;letter-spacing:1px;color:${pal[1]};font-weight:700;margin-bottom:4px;">♀ Diversity Leader</div>
+      <div style="font-size:12px;font-weight:700;color:${itx};margin-bottom:3px;">${ins.diversity_leader?.city||'—'} <span style="font-size:9px;color:${imt};font-weight:400;">${ins.diversity_leader?.female_pct||''} F</span></div>
+      <div style="font-size:9px;color:${imt};line-height:1.5;">${ins.diversity_leader?.reason||''}</div>
+    </div>
+    <div style="background:${T.s2};border:1px solid ${ibdr};border-left:3px solid ${pal[2]};border-radius:5px;padding:9px 10px;">
+      <div style="font-size:7.5px;text-transform:uppercase;letter-spacing:1px;color:${pal[2]};font-weight:700;margin-bottom:4px;">⚠ Talent Risk</div>
+      <div style="font-size:11px;font-weight:700;color:${itx};margin-bottom:3px;">${ins.talent_risk?.concern||'—'}</div>
+      <div style="font-size:9px;color:${imt};line-height:1.5;">${ins.talent_risk?.detail||''}</div>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+    <div style="background:${T.s2};border:1px solid ${ibdr};border-radius:5px;padding:9px 10px;">
+      <div style="font-size:7.5px;text-transform:uppercase;letter-spacing:1px;color:${pal[1]};font-weight:700;margin-bottom:6px;">↻ Alternate Roles</div>
+      <div>${altRoles}</div>
+    </div>
+    ${altCities?`<div style="background:${T.s2};border:1px solid ${ibdr};border-radius:5px;padding:9px 10px;">
+      <div style="font-size:7.5px;text-transform:uppercase;letter-spacing:1px;color:${imt};font-weight:700;margin-bottom:6px;">📍 Alternate Cities</div>
+      ${altCities}
+    </div>`:'<div></div>'}
+    <div style="background:${T.s2};border:1px solid ${ibdr};border-radius:5px;padding:9px 10px;">
+      <div style="font-size:7.5px;text-transform:uppercase;letter-spacing:1px;color:${pal[0]};font-weight:700;margin-bottom:6px;">↗ Key Observations</div>
+      <ul style="list-style:none;">${obs}</ul>
+    </div>
+  </div>
+  ${ins.hiring_tip?`<div style="margin-top:8px;padding:9px 12px;background:${pal[0]}14;border:1px solid ${pal[0]}33;border-radius:5px;font-size:9.5px;color:${itx};line-height:1.6;"><b style="color:${pal[0]};">💡 Hiring Tip:</b> ${ins.hiring_tip}</div>`:''}
+</div>`;
+}
+
+/* ── MAIN REPORT BUILDER ── */
+function buildReport(d, tplName){
+  const T=THEMES[tplName]||THEMES.dark;
+  const pal=T.pal;
+  const cs=d.cities.filter(c=>c.name.trim());
+  const bands=d.expBands;
+
+  const cityNames=cs.map(c=>c.name);
+  const cityVals=cs.map(c=>parseInt(c.count)||0);
+
+  const expDs=bands.map((band,bi)=>({
+    label:band,
+    data:cs.map(c=>parseInt((d.expData[c.name]||[])[bi])||0),
+    backgroundColor:pal[bi%pal.length],borderRadius:3,borderWidth:0
+  }));
+
+  const salRowsPerCity={};
+  cs.forEach(c=>{
+    salRowsPerCity[c.name.replace(/'/g,"\\'")] = (d.salData[c.name]||[]).map((r,i)=>({e:bands[i]||('Band '+(i+1)),a:parseFloat(r.avg)||0,m:parseFloat(r.max)||0,c:r.count||'—'}));
+  });
+
+  const scatterDs=cs.map((c,ci)=>{
+    const rows=d.salData[c.name]||[];
+    const pts=rows.map((r,bi)=>{const a=parseFloat(r.avg)||0,m=parseFloat(r.max)||0;return a>0?{x:a,y:m,band:bands[bi]||'',count:r.count||''}:null;}).filter(Boolean);
+    return {label:c.name,data:pts,backgroundColor:pal[ci%pal.length]+'cc',borderColor:pal[ci%pal.length],borderWidth:1.5,pointRadius:7,pointHoverRadius:9};
+  });
+
+  const indL=d.industries.map(i=>i.name), indV=d.industries.map(i=>parseFloat(i.pct)||0);
+  const eduL=d.edus.map(e=>e.name), eduV=d.edus.map(e=>parseFloat(e.pct)||0);
+
+  function disc(txt){return txt&&txt.trim()?`<div style="font-size:7.5px;color:${T.mt};margin-top:5px;line-height:1.5;border-top:1px solid ${T.bdr};padding-top:4px;font-style:italic;">* ${txt.trim()}</div>`:''}
+
+  const mapSVG=buildIndiaMap(cs,pal,tplName);
+  const insightsHTML=buildInsightsHTML(d.aiInsights,tplName);
+
+  const fonts=tplName==='light'
+    ? `<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700&family=DM+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">`
+    : tplName==='slate'
+    ? `<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">`
+    : `<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">`;
+
+  const kFontHead= tplName==='light'?`<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700&display=swap" rel="stylesheet">`:'';
+
+  return `<!DOCTYPE html><html><head>
+<meta charset="UTF-8"><title>Market Insights — ${d.jobTitle} | ${d.hiringCity}</title>
+${fonts}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"><\/script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:${T.font};background:${T.bg};color:${T.tx};font-size:11px;}
+.page{width:1440px;margin:0 auto;padding:0 0 14px;}
+.hdr{background:${T.hdrBg};padding:13px 22px;display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+.hdr-l{display:flex;align-items:center;gap:11px;}
+.badge{background:${T.badge};color:#fff;font-size:7.5px;font-weight:700;text-transform:uppercase;letter-spacing:2px;padding:3px 9px;border-radius:2px;flex-shrink:0;}
+.hdr h1{font-size:18px;font-weight:700;color:${T.titleColor};letter-spacing:-0.3px;}
+.hdr h1 em{color:${T.accent};font-style:normal;}
+.hdr-r{font-size:8.5px;color:${T.subColor};text-align:right;line-height:1.7;}
+.hdr-r b{color:${T.accent};}
+.wrap{padding:0 16px;}
+.card{background:${T.s1};border:1px solid ${T.bdr};border-radius:6px;padding:11px 12px;position:relative;overflow:hidden;box-shadow:${T.cardShadow};}
+.ct{position:absolute;top:0;left:0;right:0;height:2.5px;}
+.ctitle{font-size:8px;text-transform:uppercase;letter-spacing:1.8px;color:${T.mt};margin-bottom:7px;font-weight:700;}
+.r1{display:grid;grid-template-columns:122px 122px 1fr 215px;gap:9px;margin-bottom:9px;}
+.r2{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:9px;}
+.r3{display:grid;grid-template-columns:1fr 1fr 215px;gap:9px;margin-bottom:9px;}
+.kn{font-size:30px;font-weight:700;line-height:1;${T.kStyle}}
+.kl{font-size:8.5px;color:${T.mt};margin-top:4px;line-height:1.5;}
+.kbar{height:3px;border-radius:2px;margin-top:9px;}
+.kf{font-size:8px;color:${T.mt};margin-top:6px;} .kf b{color:${T.tx};}
+.gduo{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.gi-wrap{display:flex;flex-direction:column;align-items:center;}
+.glb{font-size:7.5px;text-transform:uppercase;letter-spacing:1px;color:${T.mt};margin-bottom:4px;font-weight:700;}
+.g-ring{width:78px;height:78px;flex-shrink:0;}
+.g-ring canvas{width:78px!important;height:78px!important;}
+.gst{display:flex;justify-content:center;gap:7px;margin-top:3px;}
+.gsm{color:${T.gMale};font-weight:700;font-size:9px;}
+.gsf{color:${T.gFemale};font-weight:700;font-size:9px;}
+.stabs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:6px;}
+.stab{font-size:8px;padding:2px 8px;border-radius:3px;background:${T.s2};color:${T.mt};cursor:pointer;border:1px solid ${T.bdr};transition:all 0.15s;}
+.stab.on{background:${pal[0]};color:${tplName==='dark'||tplName==='slate'?'#000':'#fff'};border-color:${pal[0]};font-weight:700;}
+.el{display:flex;flex-direction:column;gap:5px;padding-left:6px;}
+.ei{display:flex;align-items:center;gap:5px;}
+.ed{width:9px;height:9px;border-radius:2px;flex-shrink:0;} .en{flex:1;font-size:8.5px;color:${T.tx};} .ep{font-weight:700;font-size:9px;color:${T.accent};}
+.qs{display:flex;flex-direction:column;gap:6px;}
+.qi{padding:7px 9px;background:${T.s2};border-radius:5px;}
+.qi-l{font-size:7px;color:${T.mt};text-transform:uppercase;letter-spacing:0.8px;margin-bottom:2px;font-weight:700;}
+.qi-v{font-size:19px;font-weight:700;line-height:1.1;${T.kStyle}} .qi-s{font-size:7.5px;color:${T.mt};}
+.qi.q0{border-left:3px solid ${pal[0]};} .qi.q0 .qi-v{color:${pal[0]};}
+.qi.q1{border-left:3px solid ${pal[2]};} .qi.q1 .qi-v{color:${pal[2]};}
+.qi.q2{border-left:3px solid ${pal[1]};} .qi.q2 .qi-v{color:${pal[1]};}
+.qi.q3{border-left:3px solid ${pal[3]};} .qi.q3 .qi-v{color:${pal[3]};font-size:9.5px;padding-top:3px;}
+.bwrap{font-family:${T.monoFont};font-size:8px;color:${T.bwrapColor};line-height:1.8;word-break:break-all;background:${T.bwrapBg};padding:8px 11px;border-radius:5px;border:1px solid ${T.bdr};margin-bottom:9px;}
+.bwrap em{color:${T.bwrapKw};font-style:normal;}
+.foot{font-size:7.5px;color:${T.mt};line-height:1.7;padding:7px 16px 0;border-top:1px solid ${T.bdr};}
+.foot b{color:${T.tx};}
+</style></head><body>
+<div class="page">
+<div class="hdr">
+  <div class="hdr-l"><div class="badge">Market Insights</div><h1>${d.jobTitle} &mdash; <em>${d.hiringCity}</em></h1></div>
+  <div class="hdr-r">Date: <b>${d.researchDate}</b> &nbsp;·&nbsp; Source: <b>${d.source}</b> &nbsp;·&nbsp; Scope: <b>${d.scope}</b></div>
+</div>
+<div class="wrap">
+
+${insightsHTML}
+
+<div class="r1">
+  <div class="card" style="display:flex;flex-direction:column;justify-content:space-between;">
+    <div class="ct" style="background:linear-gradient(90deg,${pal[0]},transparent);"></div>
+    <div class="ctitle">India Talent Pool</div>
+    <div class="kn" style="color:${pal[0]};">${d.indiaPool}${d.indiaUnit}</div>
+    <div class="kl">Total profiles<br>across India</div>
+    <div class="kbar" style="background:linear-gradient(90deg,${pal[0]},${pal[0]}33);"></div>
+    <div class="kf"><b>+${d.yoyGrowth}%</b> YoY Growth</div>
+    ${disc(d.disc.pool)}
+  </div>
+  <div class="card" style="display:flex;flex-direction:column;justify-content:space-between;">
+    <div class="ct" style="background:linear-gradient(90deg,${pal[2]},transparent);"></div>
+    <div class="ctitle">Relocation Ready</div>
+    <div class="kn" style="color:${pal[2]};">${d.relocCount}${d.relocUnit}</div>
+    <div class="kl">Open to relocate<br>to ${d.hiringCity}</div>
+    <div class="kbar" style="background:linear-gradient(90deg,${pal[2]},${pal[2]}33);"></div>
+    <div class="kf"><b>${d.relocPct}%</b> of India Pool</div>
+  </div>
+  <div class="card">
+    <div class="ct" style="background:linear-gradient(90deg,${pal[1]},transparent);"></div>
+    <div class="ctitle">City-wise Talent Pool — India Map</div>
+    <div style="height:148px;overflow:hidden;">${mapSVG}</div>
+    ${disc(d.disc.cities)}
+  </div>
+  <div class="card">
+    <div class="ct" style="background:linear-gradient(90deg,${pal[3]},transparent);"></div>
+    <div class="ctitle">Gender Diversity</div>
+    <div class="gduo">
+      <div class="gi-wrap"><div class="glb">India</div><div class="g-ring"><canvas id="gi"></canvas></div><div class="gst"><span class="gsm">${d.indiaMale}% M</span><span class="gsf">${d.indiaFemale}% F</span></div></div>
+      <div class="gi-wrap"><div class="glb">${d.hiringCity}</div><div class="g-ring"><canvas id="gm"></canvas></div><div class="gst"><span class="gsm">${d.cityMale}% M</span><span class="gsf">${d.cityFemale}% F</span></div></div>
+    </div>
+    ${disc(d.disc.gender)}
+  </div>
+</div>
+
+<div class="r2">
+  <div class="card">
+    <div class="ct" style="background:linear-gradient(90deg,${pal[0]},transparent);"></div>
+    <div class="ctitle">Experience Range by City — Grouped Bar</div>
+    <div style="height:185px;position:relative;"><canvas id="expBar"></canvas></div>
+    ${disc(d.disc.exp)}
+  </div>
+  <div class="card">
+    <div class="ct" style="background:linear-gradient(90deg,${pal[4]||pal[3]},transparent);"></div>
+    <div class="ctitle">Salary Scatter — Avg CTC (x) vs Max CTC (y) · ₹L p.a. · Click band to filter</div>
+    <div class="stabs">${bands.map((b,i)=>`<div class="stab ${i===0?'on':''}" onclick="setSalBand(${i},this)">${b}</div>`).join('')}</div>
+    <div style="height:152px;position:relative;"><canvas id="salScatter"></canvas></div>
+    ${disc(d.disc.salary)}
+  </div>
+</div>
+
+<div class="r3">
+  <div class="card">
+    <div class="ct" style="background:linear-gradient(90deg,${pal[2]},transparent);"></div>
+    <div class="ctitle">Industry Bifurcation — ${d.hiringCity} Talent</div>
+    <div style="height:196px;position:relative;"><canvas id="indBar"></canvas></div>
+    ${disc(d.disc.industry)}
+  </div>
+  <div class="card">
+    <div class="ct" style="background:linear-gradient(90deg,${pal[1]},transparent);"></div>
+    <div class="ctitle">Education Split — India Pool</div>
+    <div style="display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;">
+      <div style="height:186px;position:relative;"><canvas id="eduDonut"></canvas></div>
+      <div class="el">${d.edus.map((e,i)=>`<div class="ei"><div class="ed" style="background:${pal[i%pal.length]}"></div><span class="en">${e.name}</span><span class="ep">${e.pct}%</span></div>`).join('')}</div>
+    </div>
+    ${disc(d.disc.edu)}
+  </div>
+  <div class="card">
+    <div class="ct" style="background:linear-gradient(90deg,${pal[3]},transparent);"></div>
+    <div class="ctitle">Quick Stats — ${d.hiringCity}</div>
+    <div class="qs">
+      <div class="qi q0"><div class="qi-l">Median Experience</div><div class="qi-v">${d.medExp}<span style="font-size:10px;opacity:0.6"> yrs</span></div></div>
+      <div class="qi q1"><div class="qi-l">Median Salary</div><div class="qi-v">₹${d.medSal}L</div><div class="qi-s">per annum · ${d.hiringCity}</div></div>
+      <div class="qi q2"><div class="qi-l">Actively Looking</div><div class="qi-v">${d.activePct}<span style="font-size:10px;opacity:0.6">%</span></div></div>
+      <div class="qi q3"><div class="qi-l">Top Skills</div><div class="qi-v">${d.topSkills}</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="card" style="margin-bottom:9px;">
+  <div class="ct" style="background:linear-gradient(90deg,${pal[0]},transparent);"></div>
+  <div class="ctitle">Boolean Search String</div>
+  <div class="bwrap">${(d.boolString||'').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
+</div>
+
+</div>
+${d.disc.general?`<div class="foot"><b>Note:</b> ${d.disc.general}</div>`:''}
+</div>
+
+<script>
+Chart.defaults.color='${T.cTx}';
+Chart.defaults.font.family=${JSON.stringify(T.font.replace(/'/g,''))};
+Chart.defaults.font.size=9;
+const PAL=${JSON.stringify(pal)};
+const grd='${T.grd}';
+const bands=${JSON.stringify(bands)};
+
+const gCfg=(m,f)=>({type:'doughnut',data:{labels:['Male','Female'],datasets:[{data:[m,f],backgroundColor:['${T.gMale}','${T.gFemale}'],borderWidth:0}]},options:{responsive:false,maintainAspectRatio:false,cutout:'68%',plugins:{legend:{display:false}}}});
+new Chart(document.getElementById('gi'),gCfg(${d.indiaMale},${d.indiaFemale}));
+new Chart(document.getElementById('gm'),gCfg(${d.cityMale},${d.cityFemale}));
+
+new Chart(document.getElementById('expBar'),{type:'bar',
+  data:{labels:${JSON.stringify(cityNames)},datasets:${JSON.stringify(expDs)}},
+  options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:true,position:'bottom',labels:{color:'${T.cTx}',font:{size:8.5},boxWidth:10,padding:7}}},
+    scales:{x:{grid:{display:false},ticks:{color:'${T.tx}'},border:{display:false}},
+            y:{grid:{color:grd},ticks:{callback:v=>v>=1000?v/1000+'K':v},border:{color:grd}}}}
+});
+
+const salRowsPerCity=${JSON.stringify(salRowsPerCity)};
+const scDs=${JSON.stringify(scatterDs)};
+let scChart;
+function setSalBand(bi,el){
+  document.querySelectorAll('.stab').forEach(t=>t.classList.remove('on'));
+  el.classList.add('on');
+  const bandDs=scDs.map((ds,ci)=>{
+    const cityName=ds.label;
+    const rows=salRowsPerCity[cityName]||[];
+    const r=rows[bi];
+    const avg=r?r.a:0,max=r?r.m:0;
+    return {label:ds.label,data:avg>0?[{x:avg,y:max,count:r?.c||''}]:[],backgroundColor:ds.backgroundColor,borderColor:ds.borderColor,borderWidth:1.5,pointRadius:8,pointHoverRadius:10};
+  });
+  if(scChart) scChart.destroy();
+  scChart=new Chart(document.getElementById('salScatter'),{type:'scatter',data:{datasets:bandDs},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:true,position:'bottom',labels:{color:'${T.cTx}',font:{size:8.5},boxWidth:10,padding:7}},
+        tooltip:{callbacks:{label:d=>d.dataset.label+': Avg ₹'+d.parsed.x+'L · Max ₹'+d.parsed.y+'L'+(d.raw.count?' ('+d.raw.count+')':'')}}},
+      scales:{
+        x:{title:{display:true,text:'Avg CTC (₹L)',color:'${T.mt}',font:{size:8}},grid:{color:grd},ticks:{callback:v=>'₹'+v+'L'},border:{color:grd}},
+        y:{title:{display:true,text:'Max CTC (₹L)',color:'${T.mt}',font:{size:8}},grid:{color:grd},ticks:{callback:v=>'₹'+v+'L'},border:{color:grd}}
+      }}
+  });
+}
+setSalBand(0,document.querySelector('.stab.on'));
+
+new Chart(document.getElementById('indBar'),{type:'bar',
+  data:{labels:${JSON.stringify(indL)},datasets:[{data:${JSON.stringify(indV)},backgroundColor:${JSON.stringify(pal.slice(0,indV.length))},borderRadius:4,borderWidth:0}]},
+  options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' '+c.raw+'% of pool'}}},
+    scales:{x:{grid:{color:grd},ticks:{callback:v=>v+'%'},border:{color:grd}},
+            y:{grid:{display:false},ticks:{color:'${T.tx}',font:{size:9.5}},border:{display:false}}}}
+});
+
+new Chart(document.getElementById('eduDonut'),{type:'doughnut',
+  data:{labels:${JSON.stringify(eduL)},datasets:[{data:${JSON.stringify(eduV)},backgroundColor:${JSON.stringify(pal.slice(0,eduV.length))},borderWidth:2,borderColor:'${T.s1}'}]},
+  options:{responsive:true,maintainAspectRatio:false,cutout:'55%',
+    plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.label+': '+c.raw+'%'}}}}
+});
+<\/script></body></html>`;
+}
+</script>
+</body>
+</html>
